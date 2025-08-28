@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rotating Hexagon Spiral with Central Ball</title>
+  <style>
+    /* Reset and basic settings */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      /* A dark background helps the vibrant hexagons pop */
+      background: #111;
+      font-family: sans-serif;
+    }
+    /* Main container that fills the viewport */
+    .container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    /* The spiral container holds all rotating rings */
+    .spiral {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    /* Each ring is a full‐size container with its center as the rotation origin */
+    .ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      transform-origin: 50% 50%;
+    }
+    /* The hexagon shape – note the use of clip-path (with a -webkit- fallback) */
+    .hexagon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      /* width and height will be set dynamically via JS */
+      background: #f00; /* default color (overridden) */
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    }
+    /* The ball in the center stays fixed and is drawn above the spiral */
+    .ball {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle, #fff, #ccc);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      z-index: 10;
+    }
+    /* Define keyframe animations for clockwise and counterclockwise rotation */
+    @keyframes spinClockwise {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes spinCounter {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(-360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- The spiral with rotating rings -->
+    <div class="spiral" id="spiral"></div>
+    <!-- The ball remains fixed in the center -->
+    <div class="ball"></div>
+  </div>
+
+  <script>
+    /**
+     * generateSpiral() creates several rings of hexagons.
+     * Each ring is a container that rotates continuously.
+     * Hexagons are evenly placed along the circle (using transforms)
+     * and given colors from a vibrant palette.
+     * The sizes and spacing are computed based on the viewport.
+     */
+    function generateSpiral() {
+      const spiral = document.getElementById('spiral');
+      // Clear any previously generated rings (useful on resize)
+      spiral.innerHTML = '';
+
+      // Use the smaller dimension for a responsive design
+      const minDimension = Math.min(window.innerWidth, window.innerHeight);
+      // Choose a base spacing value – you can adjust this factor to increase/decrease spacing.
+      const base = minDimension / 10;
+      // Set hexagon size as a fraction of the base (feel free to experiment)
+      const hexSize = base * 0.8;
+
+      // Number of rings to create
+      const numRings = 5;
+      // A vibrant palette of colors for the hexagons
+      const colors = [
+        "#FF6B6B",
+        "#FFD93D",
+        "#6BCB77",
+        "#4D96FF",
+        "#FF6EC7",
+        "#FFBE0B",
+        "#8338EC",
+        "#3A86FF"
+      ];
+
+      // For each ring…
+      for (let i = 1; i <= numRings; i++) {
+        // Create a container for the ring.
+        const ring = document.createElement('div');
+        ring.classList.add('ring');
+        // For visual variety, choose different rotation speeds.
+        // Alternate the rotation direction on successive rings.
+        const duration = 20 + i * 5; // Longer duration = slower rotation.
+        const animationName = (i % 2 === 0) ? 'spinCounter' : 'spinClockwise';
+        ring.style.animation = `${animationName} ${duration}s linear infinite`;
+
+        // Compute the radius at which hexagons for this ring will be placed.
+        // (Each ring is spaced by the base value.)
+        const radius = i * base;
+        // Determine how many hexagons will go around this ring.
+        // For example, ring 1 gets 6 hexagons, ring 2 gets 8, etc.
+        const count = 6 + (i - 1) * 2;
+
+        // Create each hexagon for this ring.
+        for (let j = 0; j < count; j++) {
+          const hex = document.createElement('div');
+          hex.classList.add('hexagon');
+          // Set the hexagon’s width and height
+          hex.style.width = hexSize + 'px';
+          hex.style.height = hexSize + 'px';
+
+          // Pick a color from the palette (cycling through if needed)
+          const color = colors[j % colors.length];
+          hex.style.backgroundColor = color;
+          hex.style.boxShadow = `0 0 10px ${color}`;
+
+          // Compute the angle (in degrees) at which to place the hexagon
+          const angle = (360 / count) * j;
+          /* 
+             Position the hexagon:
+             1. translate(-50%, -50%) centers the hexagon on (0,0)
+             2. rotate(angle) rotates the coordinate system by "angle"
+             3. translate(radius px) moves it out along the new x‑axis
+             4. rotate(-angle) counter-rotates so that the hexagon’s shape stays upright.
+          */
+          hex.style.transform =
+            `translate(-50%, -50%) rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg)`;
+
+          // Add the hexagon to this ring.
+          ring.appendChild(hex);
+        }
+        // Append the ring to the spiral container.
+        spiral.appendChild(ring);
+      }
+    }
+
+    // Generate the spiral when the page loads…
+    window.addEventListener('load', generateSpiral);
+    // …and regenerate it on window resize for responsiveness.
+    window.addEventListener('resize', generateSpiral);
+  </script>
+</body>
+</html>
