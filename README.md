@@ -30,4 +30,4 @@ Clone the repository:
 git clone https://github.com/yourusername/excel-replica.git
 cd excel-replica
 ```
-Open index.html in your browser and start using the spreadsheet.
+Open index.html in your browser and start using it as your new screensaver.
